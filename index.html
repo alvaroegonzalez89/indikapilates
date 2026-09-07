@@ -28,7 +28,7 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;min
 h1,h2,h3,.display{font-family:'Jost',sans-serif;}
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 /* ── LOGIN ── */
-#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+#login-screen{min-height:100vh;width:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;}
 .login-box{width:100%;max-width:380px;}
 .login-logo{text-align:center;margin-bottom:18px;position:relative;}
 .login-logo .breathe{position:absolute;left:50%;top:50%;width:150px;height:150px;transform:translate(-50%,-50%);border-radius:50%;border:1px solid var(--accent);opacity:0.35;animation:breathe 4.5s ease-in-out infinite;}
@@ -225,7 +225,7 @@ tr:last-child td{border-bottom:none;}
     <div class="nav-item" data-nav="cuotas" onclick="navTo('cuotas')"><span class="ni">◓</span> Cuotas</div>
     <div class="nav-item" data-nav="horarios" onclick="navTo('horarios')"><span class="ni">◔</span> Horarios</div>
     <div class="nav-item" data-nav="agenda" onclick="navTo('agenda')"><span class="ni">▤</span> Agenda</div>
-    <div class="nav-item" data-nav="prospectos" onclick="navTo('prospectos')"><span class="ni">◕</span> Prospectos<span class="nav-badge" id="badge-prospectos" style="display:none;">0</span></div>
+    <div class="nav-item" data-nav="prospectos" onclick="navTo('prospectos')"><span class="ni">◕</span> Inscripciones<span class="nav-badge" id="badge-prospectos" style="display:none;">0</span></div>
     <div class="nav-item" data-nav="config" onclick="navTo('config')"><span class="ni">○</span> Configuración</div>
     <div class="sb-footer">
       <span>AppSur</span>
@@ -241,7 +241,7 @@ tr:last-child td{border-bottom:none;}
     <div class="bn-item" data-nav="cuotas" onclick="navTo('cuotas')"><span class="bn-icon">◓</span>Cuotas</div>
     <div class="bn-item" data-nav="horarios" onclick="navTo('horarios')"><span class="bn-icon">◔</span>Horarios</div>
     <div class="bn-item" data-nav="agenda" onclick="navTo('agenda')"><span class="bn-icon">▤</span>Agenda</div>
-    <div class="bn-item" data-nav="prospectos" onclick="navTo('prospectos')"><span class="bn-icon">◕</span>Prospectos<span class="bn-badge" id="bn-badge" style="display:none;">0</span></div>
+    <div class="bn-item" data-nav="prospectos" onclick="navTo('prospectos')"><span class="bn-icon">◕</span>Inscripciones<span class="bn-badge" id="bn-badge" style="display:none;">0</span></div>
     <div class="bn-item" data-nav="config" onclick="navTo('config')"><span class="bn-icon">○</span>Ajustes</div>
   </div>
 </div>
@@ -366,6 +366,10 @@ const firebaseConfig = {
 };
 // Colecciones namespaced para no compartir datos con otros clientes de appsur-2ffb3
 const NS = "_indika";
+// UID del usuario Auth de INDIKA — se estampa en cada documento para que las
+// reglas de Firestore (resource.data.uid == request.auth.uid) funcionen igual
+// que con Addictive, YAM y Vital Cerámica.
+const OWNER_UID = "IfxrQC9nZ1fQprWmvsYVWxpKDBz1";
 // ════════════════════════════════════════════
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -380,13 +384,17 @@ const reservasCol   = collection(db, "reservas"+NS);
 
 // ── PLANES INDIKA (según flyer "Comunidad Indika") ──
 const PLANES_INDIKA = [
-  {nombre:"1 Clase suelta", precio:18000, vecesSemana:0},
-  {nombre:"4 clases al mes (1x/semana)", precio:39000, vecesSemana:1},
-  {nombre:"8 clases al mes (2x/semana)", precio:60000, vecesSemana:2},
-  {nombre:"12 clases al mes (3x/semana)", precio:76000, vecesSemana:3},
-  {nombre:"16 clases al mes (4x/semana)", precio:83000, vecesSemana:4},
-  {nombre:"Pack 20 clases (5x/semana)", precio:100000, vecesSemana:5},
-  {nombre:"Pack libre (6x/semana)", precio:125000, vecesSemana:6},
+  {nombre:"1 Clase suelta", precio:18000, maxHorarios:1},
+  {nombre:"4 clases al mes (1x/semana)", precio:39000, maxHorarios:1},
+  {nombre:"8 clases al mes (2x/semana)", precio:60000, maxHorarios:2},
+  {nombre:"12 clases al mes (3x/semana)", precio:76000, maxHorarios:3},
+  {nombre:"16 clases al mes (4x/semana)", precio:83000, maxHorarios:4},
+  {nombre:"Pack 20 clases (5x/semana)", precio:100000, maxHorarios:5},
+  {nombre:"Pack libre (6x/semana)", precio:125000, maxHorarios:6},
+];
+  {nombre:"16 clases al mes (4x/semana)", precio:83000, maxHorarios:4},
+  {nombre:"Pack 20 clases (5x/semana)", precio:100000, maxHorarios:5},
+  {nombre:"Pack libre (6x/semana)", precio:125000, maxHorarios:6},
 ];
 window.PLANES_INDIKA = PLANES_INDIKA;
 
@@ -450,9 +458,13 @@ let gymConfig={
 // Supuesto: mismas bandas horarias de lunes a viernes (ajustable en Configuración
 // si el estudio abre distinto los sábados o algún otro día).
 const HORAS_INDIKA = ["08:00","09:00","10:00","11:00","12:00","13:00","15:00","16:00","17:00","18:00","19:00"];
-const HORARIOS_DEFAULT = ["Lunes","Martes","Miércoles","Jueves","Viernes"].flatMap(dia =>
-  HORAS_INDIKA.map(hora => ({key:`${dia} ${hora}`, dia, hora, cupos:6}))
-);
+const HORAS_SABADO = ["08:00","09:00","10:00","11:00","12:00","13:00","15:00","16:00"];
+const CUPOS_DEFAULT = 5;
+const HORARIOS_DEFAULT = [
+  ...["Lunes","Martes","Miércoles","Jueves","Viernes"].flatMap(dia =>
+    HORAS_INDIKA.map(hora => ({key:`${dia} ${hora}`, dia, hora, cupos:CUPOS_DEFAULT}))),
+  ...HORAS_SABADO.map(hora => ({key:`Sábado ${hora}`, dia:"Sábado", hora, cupos:CUPOS_DEFAULT})),
+];
 let HORARIOS_FIJOS = [...HORARIOS_DEFAULT];
 
 function horarioKey(dia, hora){ return `${dia} ${hora}`; }
@@ -529,7 +541,7 @@ function initApp(){
   onSnapshot(horariosCol, async snap=>{
     if(snap.empty){
       for(const h of HORARIOS_DEFAULT){
-        await setDoc(doc(db,"horarios"+NS,h.key.replace(/ /g,"_")), {dia:h.dia, hora:h.hora, cupos:h.cupos, key:h.key});
+        await setDoc(doc(db,"horarios"+NS,h.key.replace(/ /g,"_")), {dia:h.dia, hora:h.hora, cupos:h.cupos, key:h.key, uid:OWNER_UID});
       }
     } else {
       HORARIOS_FIJOS = snap.docs.map(d=>d.data()).sort((a,b)=>{
@@ -620,7 +632,7 @@ function renderDashboard(){
     :`<div style="color:var(--muted);font-size:14px;padding:20px 0;">No hay horarios configurados para hoy.</div>`}
   ${nuevosProsp?`<div class="card" style="border-color:rgba(130,147,143,0.4);cursor:pointer;margin-top:24px;" onclick="navTo('prospectos')">
       <div style="padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <div><div style="font-weight:600;color:var(--dustyblue);">Tenés ${nuevosProsp} prospecto${nuevosProsp>1?"s":""} nuevo${nuevosProsp>1?"s":""}</div>
+        <div><div style="font-weight:600;color:var(--dustyblue);">Tenés ${nuevosProsp} inscripción${nuevosProsp>1?"es":""} nueva${nuevosProsp>1?"s":""}</div>
         <div style="font-size:12px;color:var(--muted);">Alguien completó el formulario de inscripción</div></div>
         <button class="btn btn-blue btn-sm">Ver ahora →</button>
       </div>
@@ -718,7 +730,7 @@ function renderProspectos(){
         <button class="btn btn-success btn-sm" onclick="verProspecto('${p.id}')">Ver detalle</button>
         <button class="btn btn-fire btn-sm" onclick="convertirProspecto('${p.id}')">+ Confirmar</button>
       </div></td>
-    </tr>`).join(""):`<tr><td colspan="6" class="empty">No hay prospectos nuevos</td></tr>`;
+    </tr>`).join(""):`<tr><td colspan="6" class="empty">No hay inscripciones nuevas</td></tr>`;
   const rowsGest=gestionados.length?gestionados.map(p=>`
     <tr>
       <td><div class="av-row"><div class="avatar" style="background:var(--muted)">${p.nombre[0]}</div>
@@ -732,7 +744,7 @@ function renderProspectos(){
   setTimeout(()=>{ const el=document.getElementById("link-inscripcion"); if(el) el.textContent=getLinkInscripcion(); },100);
   return `<div class="page">
     <div class="topbar">
-      <div><div class="eyebrow">Inscripciones recibidas</div><div class="page-title">Prospectos</div></div>
+      <div><div class="eyebrow">Inscripciones recibidas</div><div class="page-title">Inscripciones</div></div>
       <button class="btn btn-blue" onclick="copiarLinkInscripcion()">🔗 Copiar link de inscripción</button>
     </div>
     <div class="link-box">
@@ -822,7 +834,12 @@ function renderConfig(){
     <div class="topbar"><div><div class="eyebrow">Ajustes</div><div class="page-title">Configuración</div></div></div>
 
     <div class="card" style="margin-bottom:16px;">
-      <div class="card-header"><div class="card-title">Horarios y cupos</div><div style="font-size:12px;color:var(--muted);">Solo podés quitar horarios sin alumnas asignadas</div></div>
+      <div class="card-header"><div class="card-title">Horarios y cupos</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:12px;color:var(--muted);">Solo podés quitar horarios sin alumnas asignadas</div>
+          <button class="btn btn-ghost btn-sm" onclick="restablecerHorariosDefault()">↺ Restablecer por defecto</button>
+        </div>
+      </div>
       <table>
         <thead><tr><th>Día</th><th>Hora</th><th>Cupos</th><th>Ocupación</th><th></th></tr></thead>
         <tbody>${horariosRows}</tbody>
@@ -832,7 +849,7 @@ function renderConfig(){
         <div style="display:grid;grid-template-columns:1fr 1fr 80px auto;gap:10px;align-items:flex-end;">
           <div><label class="fl">Día</label><select class="fi" id="new-h-dia">${diaOpts}</select></div>
           <div><label class="fl">Hora</label><input class="fi" type="time" id="new-h-hora"/></div>
-          <div><label class="fl">Cupos</label><input class="fi" type="number" id="new-h-cupos" value="6" min="1" max="20"/></div>
+          <div><label class="fl">Cupos</label><input class="fi" type="number" id="new-h-cupos" value="5" min="1" max="20"/></div>
           <div><button class="btn btn-fire" style="width:100%;" onclick="agregarHorarioConfig()">+ Agregar</button></div>
         </div>
       </div>
@@ -965,7 +982,7 @@ window.guardarAlumno=async function(){
   };
   const editId=document.getElementById("edit-id").value;
   if(editId){ await updateDoc(doc(db,"alumnos"+NS,editId),data); toast("Alumna actualizada ✓"); }
-  else{ data.fechaAlta=new Date().toISOString().slice(0,10); data.cuotas={}; await addDoc(alumnosCol,data); toast("Alumna agregada ✓"); }
+  else{ data.fechaAlta=new Date().toISOString().slice(0,10); data.cuotas={}; data.uid=OWNER_UID; await addDoc(alumnosCol,data); toast("Alumna agregada ✓"); }
   cerrarModal();
 }
 
@@ -1182,7 +1199,7 @@ window.convertirProspecto=async function(id){
     plan:p.plan||"", monto:p.monto||0,
     horarios:horariosArr,
     activo:true,
-    fechaAlta:new Date().toISOString().slice(0,10), cuotas:{}
+    fechaAlta:new Date().toISOString().slice(0,10), cuotas:{}, uid:OWNER_UID
   });
   await updateDoc(doc(db,"prospectos"+NS,id),{estado:"confirmado"});
   document.getElementById("modal-prospecto").style.display="none";
@@ -1215,12 +1232,12 @@ window.guardarConfigMP=async function(){
 window.agregarHorarioConfig=async function(){
   const dia=document.getElementById("new-h-dia").value;
   const horaRaw=document.getElementById("new-h-hora").value;
-  const cupos=Number(document.getElementById("new-h-cupos").value||6);
+  const cupos=Number(document.getElementById("new-h-cupos").value||5);
   if(!horaRaw){ toast("Elegí una hora","err"); return; }
   const hora=horaRaw.length===5?horaRaw:horaRaw+":00";
   const key=`${dia} ${hora}`;
   if(HORARIOS_FIJOS.find(h=>h.key===key)){ toast("Ese horario ya existe","err"); return; }
-  await setDoc(doc(db,"horarios"+NS,key.replace(/ /g,"_")), {dia, hora, cupos, key});
+  await setDoc(doc(db,"horarios"+NS,key.replace(/ /g,"_")), {dia, hora, cupos, key, uid:OWNER_UID});
   toast(`Horario ${key} agregado ✓`);
 }
 window.eliminarHorarioConfig=async function(key){
@@ -1233,6 +1250,21 @@ window.editarCupoHorario=async function(key, valor){
   const cupos=Math.max(1,Number(valor));
   await setDoc(doc(db,"horarios"+NS,key.replace(/ /g,"_")), {cupos}, {merge:true});
   toast(`Cupo de ${key} → ${cupos}`);
+}
+window.restablecerHorariosDefault=async function(){
+  const conAlumnas=HORARIOS_FIJOS.filter(h=>sociosEnHorario(h.key).length>0);
+  if(conAlumnas.length){
+    if(!confirm(`Hay ${conAlumnas.length} horario(s) con alumnas asignadas. Restablecer va a recrear TODOS los horarios con los valores por defecto (5 cupos, lunes a sábado) sin borrar alumnas ni sus horarios asignados. ¿Continuar?`)) return;
+  } else {
+    if(!confirm("Esto va a recrear todos los horarios con los valores por defecto (5 cupos, lunes a sábado). ¿Continuar?")) return;
+  }
+  for(const h of HORARIOS_FIJOS){
+    await deleteDoc(doc(db,"horarios"+NS,h.key.replace(/ /g,"_")));
+  }
+  for(const h of HORARIOS_DEFAULT){
+    await setDoc(doc(db,"horarios"+NS,h.key.replace(/ /g,"_")), {dia:h.dia, hora:h.hora, cupos:h.cupos, key:h.key, uid:OWNER_UID});
+  }
+  toast("Horarios restablecidos ✓");
 }
 
 // ── AGENDA DE TURNOS (admin) ──
@@ -1373,7 +1405,7 @@ window.seedSemanaActual=async function(){
         const fk=fechaKey(fechaDia);
         const yaExiste=reservas.find(r=>r.fecha===fk&&r.horario===hkey&&r.alumnoNombre===alumno.nombre);
         if(!yaExiste){
-          await addDoc(reservasCol,{fecha:fk, horario:hkey, alumnoNombre:alumno.nombre, alumnoId:alumno.id, ts:Date.now(), auto:true});
+          await addDoc(reservasCol,{fecha:fk, horario:hkey, alumnoNombre:alumno.nombre, alumnoId:alumno.id, ts:Date.now(), auto:true, uid:OWNER_UID});
           count++;
         }
       }
@@ -1405,7 +1437,7 @@ window.agregarReservaAdmin=async function(slotId, fecha, horario){
   } else {
     [alumnoId, alumnoNombre]=sel.value.split("|");
   }
-  await addDoc(reservasCol,{fecha, horario, alumnoNombre, alumnoId, ts:Date.now(), manual:true});
+  await addDoc(reservasCol,{fecha, horario, alumnoNombre, alumnoId, ts:Date.now(), manual:true, uid:OWNER_UID});
   document.getElementById("main-content").innerHTML=renderAgendaAdmin();
 }
 window.toggleOtroAdmin=function(slotId, val){
@@ -1581,7 +1613,7 @@ function alumnoBar(a){
   </div>`;
 }
 window.hacerReserva=async function(fecha, horario, alumnoNombre, alumnoId){
-  await addDoc(reservasCol,{fecha, horario, alumnoNombre, alumnoId, ts:Date.now()});
+  await addDoc(reservasCol,{fecha, horario, alumnoNombre, alumnoId, ts:Date.now(), uid:OWNER_UID});
   agToast("✓ Turno reservado");
 }
 window.cancelarReserva=async function(id){
@@ -1610,6 +1642,10 @@ function initPublicForm(){
 function renderHorariosFormulario(){
   const wrap = document.getElementById("ins-horarios-wrap");
   if(!wrap) return;
+  const plan = PLANES_INDIKA[window._insPlanIdx!==undefined?window._insPlanIdx:1];
+  const max = plan ? plan.maxHorarios : 1;
+  const labelEl = document.getElementById("ins-horarios-limite");
+  if(labelEl) labelEl.textContent = `Tu plan te permite elegir hasta ${max} horario${max!==1?"s":""} fijo${max!==1?"s":""} por semana.`;
   const grupos = DIAS_ORDEN.filter(d=>HORARIOS_FIJOS.some(h=>h.dia===d));
   wrap.innerHTML = grupos.map(dia=>{
     const slots=HORARIOS_FIJOS.filter(h=>h.dia===dia);
@@ -1618,10 +1654,19 @@ function renderHorariosFormulario(){
       const libres=cuposLibres(h.key);
       const dis = libres<=0 ? "disabled" : "";
       return `<label style="display:flex;align-items:center;gap:5px;font-size:12px;background:#F6EFE3;border:1px solid #E6DCC7;border-radius:7px;padding:6px 10px;cursor:${libres<=0?"not-allowed":"pointer"};opacity:${libres<=0?"0.45":"1"};">
-        <input type="checkbox" value="${h.key}" class="ins-horario-chk" ${dis} style="accent-color:#6B6B47;"/>${h.hora} ${libres<=0?"(sin cupo)":""}
+        <input type="checkbox" value="${h.key}" class="ins-horario-chk" ${dis} onchange="limitarHorarioForm(this)" style="accent-color:#6B6B47;"/>${h.hora} ${libres<=0?"(sin cupo)":""}
       </label>`;
     }).join("")}</div>`;
   }).join("");
+}
+window.limitarHorarioForm=function(chk){
+  const plan = PLANES_INDIKA[window._insPlanIdx!==undefined?window._insPlanIdx:1];
+  const max = plan ? plan.maxHorarios : 1;
+  const marcados = document.querySelectorAll(".ins-horario-chk:checked");
+  if(marcados.length > max){
+    chk.checked = false;
+    alert(`Tu plan permite elegir hasta ${max} horario${max!==1?"s":""} por semana.`);
+  }
 }
 
 function renderPlanCardsFormulario(){
@@ -1638,6 +1683,15 @@ window.seleccionarPlanForm=function(idx, el){
   document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
   window._insPlanIdx=idx;
+  const plan = PLANES_INDIKA[idx];
+  const max = plan.maxHorarios;
+  const marcados = Array.from(document.querySelectorAll(".ins-horario-chk:checked"));
+  if(marcados.length > max){
+    marcados.slice(max).forEach(chk=>chk.checked=false);
+    alert(`Tu plan permite elegir hasta ${max} horario${max!==1?"s":""} por semana. Se destildaron los que sobraban.`);
+  }
+  const labelEl = document.getElementById("ins-horarios-limite");
+  if(labelEl) labelEl.textContent = `Tu plan te permite elegir hasta ${max} horario${max!==1?"s":""} fijo${max!==1?"s":""} por semana.`;
 }
 
 function mostrarFormularioInscripcion(){
@@ -1684,6 +1738,7 @@ function mostrarFormularioInscripcion(){
         <div class="plan-cards" id="ins-plan-cards"></div>
       </div>
       <div class="fg"><label class="fl">Días y horarios de interés</label></div>
+      <div id="ins-horarios-limite" style="font-size:11px;color:#6B6B47;font-weight:600;margin-bottom:8px;"></div>
       <div id="ins-horarios-wrap"></div>
       <div class="fg"><label class="fl">Mensaje (opcional)</label>
         <textarea class="fi" id="ins-mensaje" rows="3" placeholder="Contanos algo sobre vos o consultanos lo que quieras..."></textarea>
@@ -1714,6 +1769,7 @@ window.enviarInscripcion=async function(){
     estado:"nuevo",
     fecha:new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"})
   };
+  data.uid = OWNER_UID;
   await addDoc(prospectosCol, data);
   document.body.innerHTML=`
   <style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#F6EFE3;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Poppins',sans-serif;}</style>
