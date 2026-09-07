@@ -350,7 +350,7 @@ tr:last-child td{border-bottom:none;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, setDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // ════════════════════════════════════════════
@@ -383,7 +383,7 @@ const prospectosCol = collection(db, "prospectos"+NS);
 const reservasCol   = collection(db, "reservas"+NS);
 
 // ── PLANES INDIKA (según flyer "Comunidad Indika") ──
-const PLANES_INDIKA = [
+const PLANES_DEFAULT = [
   {nombre:"1 Clase suelta", precio:18000, maxHorarios:1},
   {nombre:"4 clases al mes (1x/semana)", precio:39000, maxHorarios:1},
   {nombre:"8 clases al mes (2x/semana)", precio:60000, maxHorarios:2},
@@ -392,6 +392,7 @@ const PLANES_INDIKA = [
   {nombre:"Pack 20 clases (5x/semana)", precio:100000, maxHorarios:5},
   {nombre:"Pack libre (6x/semana)", precio:125000, maxHorarios:6},
 ];
+let PLANES_INDIKA = [...PLANES_DEFAULT];
 window.PLANES_INDIKA = PLANES_INDIKA;
 
 // ── LOGIN (Firebase Auth real) ──
@@ -502,6 +503,15 @@ function lunesDate(offset){
   const l=getLunesDe(h); l.setDate(l.getDate()+offset*7); return l;
 }
 const DIAS_ES2=["","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+function horaDeSlot(hkey){
+  const partes=hkey.split(' ');
+  return partes[partes.length-1];
+}
+function faltanMenosDe24hs(fecha, hkey){
+  const hora=horaDeSlot(hkey);
+  const fechaHora=new Date(`${fecha}T${hora}:00`);
+  return (fechaHora.getTime() - Date.now()) < 24*60*60*1000;
+}
 const MESES_ES2=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 function reservasDelDia(fechaStr){ return reservas.filter(r=>r.fecha===fechaStr); }
 function reservasAlumnoSemana(nombre, lunesD){
@@ -530,10 +540,10 @@ let appInited=false;
 function initApp(){
   if(appInited) return;
   appInited=true;
-  onSnapshot(alumnosCol, snap=>{ alumnos=snap.docs.map(d=>({id:d.id,...d.data()})); render(); });
-  onSnapshot(prospectosCol, snap=>{ prospectos=snap.docs.map(d=>({id:d.id,...d.data()})); actualizarBadgeProspectos(); render(); });
+  onSnapshot(query(alumnosCol, where("uid","==",OWNER_UID)), snap=>{ alumnos=snap.docs.map(d=>({id:d.id,...d.data()})); render(); });
+  onSnapshot(query(prospectosCol, where("uid","==",OWNER_UID)), snap=>{ prospectos=snap.docs.map(d=>({id:d.id,...d.data()})); actualizarBadgeProspectos(); render(); });
   onSnapshot(reservasCol, snap=>{ reservas=snap.docs.map(d=>({id:d.id,...d.data()})); if(vistaActual==="agenda") render(); else render(); });
-  onSnapshot(configCol, snap=>{ snap.docs.forEach(d=>{ if(d.id==="gym"){ gymConfig={...gymConfig,...d.data()}; const el=document.getElementById("sb-gymname"); if(el) el.textContent=gymConfig.nombre; render(); }}); });
+  onSnapshot(configCol, snap=>{ snap.docs.forEach(d=>{ if(d.id==="gym"){ gymConfig={...gymConfig,...d.data()}; if(d.data().planes&&d.data().planes.length) PLANES_INDIKA=d.data().planes; const el=document.getElementById("sb-gymname"); if(el) el.textContent=gymConfig.nombre; render(); }}); });
   onSnapshot(horariosCol, async snap=>{
     if(snap.empty){
       for(const h of HORARIOS_DEFAULT){
@@ -864,6 +874,24 @@ function renderConfig(){
           <div class="fg"><label class="fl">Titular</label><input class="fi" id="cfg-titular" value="${gymConfig.titular||''}"/></div>
         </div>
         <button class="btn btn-fire" onclick="guardarConfig()" style="margin-top:8px;">Guardar datos</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><div class="card-title">Planes y precios</div><div style="font-size:12px;color:var(--muted);">Se reflejan al toque en el formulario de inscripción</div></div>
+      <table>
+        <thead><tr><th>Plan</th><th>Precio</th><th>Máx. horarios/semana</th><th></th></tr></thead>
+        <tbody id="tbody-planes">${PLANES_INDIKA.map((p,i)=>`
+          <tr>
+            <td><input class="fi" id="plan-nombre-${i}" value="${p.nombre}" style="min-width:200px;"/></td>
+            <td><input class="fi" id="plan-precio-${i}" type="number" value="${p.precio}" style="width:110px;"/></td>
+            <td><input class="fi" id="plan-max-${i}" type="number" min="1" max="7" value="${p.maxHorarios}" style="width:70px;"/></td>
+            <td><button class="btn btn-danger btn-sm" onclick="quitarFilaPlan(${i})">✕</button></td>
+          </tr>`).join("")}</tbody>
+      </table>
+      <div style="padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="agregarFilaPlan()">+ Agregar plan</button>
+        <button class="btn btn-fire" onclick="guardarPlanes()">Guardar planes y precios</button>
       </div>
     </div>
 
@@ -1225,6 +1253,41 @@ window.guardarConfigMP=async function(){
   gymConfig={...gymConfig, mp_link};
   toast("Link de MercadoPago guardado ✓","blue"); render();
 }
+window._planesFilas = null;
+window.agregarFilaPlan=function(){
+  const cuerpo=document.getElementById("tbody-planes");
+  const i=cuerpo.querySelectorAll("tr").length;
+  const fila=document.createElement("tr");
+  fila.innerHTML=`
+    <td><input class="fi" id="plan-nombre-${i}" value="" style="min-width:200px;" placeholder="Nombre del plan"/></td>
+    <td><input class="fi" id="plan-precio-${i}" type="number" value="0" style="width:110px;"/></td>
+    <td><input class="fi" id="plan-max-${i}" type="number" min="1" max="7" value="1" style="width:70px;"/></td>
+    <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button></td>`;
+  cuerpo.appendChild(fila);
+}
+window.quitarFilaPlan=function(i){
+  document.getElementById(`plan-nombre-${i}`)?.closest("tr")?.remove();
+}
+window.guardarPlanes=async function(){
+  const filas=document.querySelectorAll("#tbody-planes tr");
+  const planes=[];
+  filas.forEach(fila=>{
+    const nombreInput=fila.querySelector('input[id^="plan-nombre-"]');
+    const precioInput=fila.querySelector('input[id^="plan-precio-"]');
+    const maxInput=fila.querySelector('input[id^="plan-max-"]');
+    if(!nombreInput||!nombreInput.value.trim()) return;
+    planes.push({
+      nombre:nombreInput.value.trim(),
+      precio:Number(precioInput.value||0),
+      maxHorarios:Number(maxInput.value||1)
+    });
+  });
+  if(!planes.length){ toast("Cargá al menos un plan","err"); return; }
+  await setDoc(doc(db,"config"+NS,"gym"), {planes}, {merge:true});
+  PLANES_INDIKA = planes;
+  toast("Planes y precios actualizados ✓");
+  render();
+}
 window.agregarHorarioConfig=async function(){
   const dia=document.getElementById("new-h-dia").value;
   const horaRaw=document.getElementById("new-h-hora").value;
@@ -1446,7 +1509,7 @@ function initPublicAgenda(){
   onSnapshot(alumnosCol, snap=>{ alumnos=snap.docs.map(d=>({id:d.id,...d.data()})); });
   onSnapshot(horariosCol, snap=>{ if(!snap.empty) HORARIOS_FIJOS=snap.docs.map(d=>d.data()); });
   onSnapshot(reservasCol, snap=>{ reservas=snap.docs.map(d=>({id:d.id,...d.data()})); });
-  onSnapshot(configCol, snap=>{ snap.docs.forEach(d=>{ if(d.id==="gym") gymConfig={...gymConfig,...d.data()}; }); });
+  onSnapshot(configCol, snap=>{ snap.docs.forEach(d=>{ if(d.id==="gym"){ gymConfig={...gymConfig,...d.data()}; if(d.data().planes&&d.data().planes.length) PLANES_INDIKA=d.data().planes; } }); });
   setTimeout(mostrarAgendaPublica, 800);
 }
 
@@ -1549,7 +1612,6 @@ window.renderAgendaAlumno=function(){
     document.querySelector(".ag-body").innerHTML=`${alumnoBar(a)}<div style="text-align:center;padding:40px;color:#B8AF9C;font-size:14px;">No hay más días disponibles esta semana</div>`;
     return;
   }
-  let gridStyle=`grid-template-columns:70px ${diasConH.map(()=>'1fr').join(' ')};`;
   let headerHtml=`<div class="ag-th-hora"></div>`;
   diasConH.forEach(d=>{
     const esHoy=fechaKey(d)===fechaKey(hoyD);
@@ -1571,7 +1633,12 @@ window.renderAgendaAlumno=function(){
       const colorCupos=libres<=0?"ag-cupos-lleno":libres===1?"ag-cupos-bajo":"ag-cupos-ok";
       let btn="";
       if(esPasado){ btn=`<button class="ag-btn-slot ag-btn-lleno" disabled style="opacity:0.3;">Pasado</button>`; }
-      else if(miRes){ btn=`<button class="ag-btn-slot ag-btn-cancelar" onclick="cancelarReserva('${miRes.id}')">✓ Cancelar</button>`; }
+      else if(miRes){
+        const bloqueado = faltanMenosDe24hs(fk, hkey);
+        btn = bloqueado
+          ? `<button class="ag-btn-slot ag-btn-lleno" disabled title="Ya no se puede modificar: falta menos de 24hs">🔒 Reservado</button>`
+          : `<button class="ag-btn-slot ag-btn-cancelar" onclick="cancelarReserva('${miRes.id}')">✓ Cancelar</button>`;
+      }
       else if(libres<=0){ btn=`<button class="ag-btn-slot ag-btn-lleno" disabled>Lleno</button>`; }
       else if(limite){ btn=`<button class="ag-btn-slot ag-btn-lleno" disabled title="Límite semanal alcanzado">Límite</button>`; }
       else { btn=`<button class="ag-btn-slot ag-btn-reservar" onclick="hacerReserva('${fk}','${hkey}','${a.nombre}','${a.id}')">+ Anotarme</button>`; }
@@ -1613,6 +1680,12 @@ window.hacerReserva=async function(fecha, horario, alumnoNombre, alumnoId){
   agToast("✓ Turno reservado");
 }
 window.cancelarReserva=async function(id){
+  const r=reservas.find(x=>x.id===id);
+  if(r && faltanMenosDe24hs(r.fecha, r.horario)){
+    agToast("Ya no podés cancelar: falta menos de 24hs para el turno","err");
+    renderAgendaAlumno();
+    return;
+  }
   await deleteDoc(doc(db,"reservas"+NS,id));
   agToast("Turno cancelado","err");
 }
@@ -1631,7 +1704,7 @@ function initPublicForm(){
     });
   });
   onSnapshot(alumnosCol, snap=>{ alumnos=snap.docs.map(d=>({id:d.id,...d.data()})); if(document.getElementById("ins-horarios-wrap")) renderHorariosFormulario(); });
-  onSnapshot(configCol, snap=>{ snap.docs.forEach(d=>{ if(d.id==="gym") gymConfig={...gymConfig,...d.data()}; if(document.getElementById("form-gymname")) document.getElementById("form-gymname").textContent=gymConfig.nombre.toUpperCase(); }); });
+  onSnapshot(configCol, snap=>{ snap.docs.forEach(d=>{ if(d.id==="gym"){ gymConfig={...gymConfig,...d.data()}; if(d.data().planes&&d.data().planes.length) PLANES_INDIKA=d.data().planes; if(document.getElementById("form-gymname")) document.getElementById("form-gymname").textContent=gymConfig.nombre.toUpperCase(); if(document.getElementById("ins-plan-cards")) renderPlanCardsFormulario(); } }); });
   setTimeout(mostrarFormularioInscripcion, 700);
 }
 
