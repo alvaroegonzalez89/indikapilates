@@ -1613,6 +1613,7 @@ function renderAgendaAlumno(){
     document.querySelector(".ag-body").innerHTML=`${alumnoBar(a)}<div style="text-align:center;padding:40px;color:#B8AF9C;font-size:14px;">No hay más días disponibles esta semana</div>`;
     return;
   }
+  let gridStyle=`grid-template-columns:70px ${diasConH.map(()=>'1fr').join(' ')};`;
   let headerHtml=`<div class="ag-th-hora"></div>`;
   diasConH.forEach(d=>{
     const esHoy=fechaKey(d)===fechaKey(hoyD);
