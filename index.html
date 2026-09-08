@@ -559,11 +559,12 @@ function initApp(){
   });
 }
 
-window.navTo=function(v){
+function navTo(v){
   vistaActual=v;
   document.querySelectorAll(".nav-item,.bn-item").forEach(el=>el.classList.toggle("active", el.dataset.nav===v));
   render();
 }
+window.navTo = navTo;
 
 function render(){
   const el=document.getElementById("main-content");
@@ -1002,12 +1003,12 @@ window.guardarAlumno=async function(){
     telefono:document.getElementById("f-tel").value.trim(),
     dni:document.getElementById("f-dni").value.trim(),
     plan:planVal,
-    horarios:getHorariosSeleccionados()
+    horarios:window.getHorariosSeleccionados()
   };
   const editId=document.getElementById("edit-id").value;
   if(editId){ await updateDoc(doc(db,"alumnos"+NS,editId),data); toast("Alumna actualizada ✓"); }
   else{ data.fechaAlta=new Date().toISOString().slice(0,10); data.cuotas={}; data.uid=OWNER_UID; await addDoc(alumnosCol,data); toast("Alumna agregada ✓"); }
-  cerrarModal();
+  window.cerrarModal();
 }
 
 window.abrirDelete=function(id,nombre,tipo="alumno"){
@@ -1044,7 +1045,7 @@ window.toggleCuota=async function(id){
   mostrarComprobante(a,cuotas[ck]);
 }
 
-window.mostrarComprobante=function(a,pago){
+function mostrarComprobante(a,pago){
   const monto=Number(pago?.monto||a.monto||0).toLocaleString("es-AR");
   const fecha=pago?.fecha||new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
   const hora=pago?.hora||new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
@@ -1164,7 +1165,7 @@ Te recordamos que tu cuota de *${MESES[mesVista]} ${añoVista}* en *${gymConfig.
     document.getElementById("rec-actions").innerHTML=`<div style="text-align:center;padding:10px 0;"><div style="font-family:'Jost',sans-serif;font-size:16px;margin-bottom:4px;">¡Listo!</div><div style="font-size:12px;color:var(--muted);margin-bottom:16px;">${_pendientesLista.length} recordatorios enviados</div><button class="btn btn-fire" style="width:100%;justify-content:center;" onclick="cerrarRecordatorios()">Cerrar</button></div>`;
   } else { actualizarModalRec(); }
 }
-window.saltarRecordatorio=function(){ _recIdx++; if(_recIdx>=_pendientesLista.length) cerrarRecordatorios(); else actualizarModalRec(); }
+window.saltarRecordatorio=function(){ _recIdx++; if(_recIdx>=_pendientesLista.length) window.cerrarRecordatorios(); else actualizarModalRec(); }
 window.cerrarRecordatorios=function(){ document.getElementById("modal-recordatorios").style.display="none"; }
 
 window.verProspecto=function(id){
@@ -1594,7 +1595,7 @@ window.buscarAlumnoAgenda=function(){
   renderAgendaAlumno();
 }
 
-window.renderAgendaAlumno=function(){
+function renderAgendaAlumno(){
   const a=window._agAlumno; if(!a) return;
   const offset=window._agSemanaOffset||0;
   const hoyD=new Date(); hoyD.setHours(0,0,0,0);
@@ -1669,6 +1670,7 @@ window.renderAgendaAlumno=function(){
     </div>
     <div class="ag-grid-wrap"><div class="ag-grid" style="${gridStyle}"><div class="ag-grid-header">${headerHtml}</div>${rowsHtml}</div></div>`;
 }
+window.renderAgendaAlumno = renderAgendaAlumno;
 function alumnoBar(a){
   return `<div class="ag-alumno-bar">
     <div><div class="ag-alumno-name">${a.nombre}</div><div class="ag-alumno-plan">${a.plan||"Plan mensual"}</div></div>
