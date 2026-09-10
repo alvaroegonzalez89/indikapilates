@@ -595,7 +595,7 @@ function renderDashboard(){
     const enHorario=reservasDelDia(hoyFk).filter(r=>r.horario===h.key);
     const libres=h.cupos-enHorario.length;
     const colorBar=libres<=0?"var(--terracotta)":libres===1?"var(--gold)":"var(--green)";
-    const nombresHtml=enHorario.length?enHorario.map(r=>`<span style="font-size:11px;color:var(--muted);">${r.alumnoNombre.split(' ')[0]}</span>`).join(", "):`<span style="font-size:11px;color:var(--muted);">Sin reservas</span>`;
+    const nombresHtml=enHorario.length?enHorario.map(r=>`<span style="font-size:11px;color:var(--muted);">${r.alumnoNombre}</span>`).join(", "):`<span style="font-size:11px;color:var(--muted);">Sin reservas</span>`;
     return `<div class="card" style="margin-bottom:0;">
       <div style="padding:14px 16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -1374,7 +1374,7 @@ function renderAgendaAdmin(){
       const nombresHtml=resSlot.map(r=>`
         <div style="display:flex;align-items:center;gap:5px;padding:2px 0;">
           <div style="width:16px;height:16px;border-radius:50%;background:${avatarColor(r.alumnoNombre)};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;">${r.alumnoNombre[0]}</div>
-          <span style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${r.alumnoNombre.split(' ')[0]}</span>
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${r.alumnoNombre}</span>
         </div>`).join("");
       const alumnosDisponibles=alumnos.filter(a=>a.activo&&!resSlot.find(r=>r.alumnoNombre===a.nombre));
       const optsAlumnos=alumnosDisponibles.map(a=>`<option value="${a.id}|${a.nombre}">${a.nombre}</option>`).join("");
@@ -1392,7 +1392,7 @@ function renderAgendaAdmin(){
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">Quitar</div>
           ${resSlot.length?resSlot.map(r=>`
             <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;">
-              <span style="font-size:11px;color:var(--muted);">${r.alumnoNombre.split(' ')[0]}</span>
+              <span style="font-size:11px;color:var(--muted);">${r.alumnoNombre}</span>
               <button onclick="quitarReservaAdmin('${r.id}')" style="background:rgba(181,88,63,0.12);border:none;border-radius:4px;color:var(--terracotta);font-size:9px;padding:2px 6px;cursor:pointer;font-family:'Poppins',sans-serif;">✕ Quitar</button>
             </div>`).join(""):`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Sin reservas aún</div>`}
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:7px 0 4px;">Agregar</div>
@@ -1451,9 +1451,15 @@ window.seedSemanaActual=async function(){
   const primerDiaMes=new Date(hoyD.getFullYear(), hoyD.getMonth(), 1);
   const ultimoDiaMes=new Date(hoyD.getFullYear(), hoyD.getMonth()+1, 0);
   const DIAS_IDX={"Lunes":0,"Martes":1,"Miércoles":2,"Jueves":3,"Viernes":4,"Sábado":5};
-  let count=0;
+  const mesActualStr=`${hoyD.getFullYear()}-${String(hoyD.getMonth()+1).padStart(2,'0')}`;
+  let count=0, saltadas=0;
   for(const alumno of alumnos){
     if(!alumno.activo || !alumno.horarios || !alumno.horarios.length) continue;
+    // Si la alumna ya tiene al menos una reserva este mes, la salteamos entera:
+    // puede haber cambiado un turno a mano o cancelado uno puntual, y no queremos
+    // pisar esas decisiones creando duplicados o resucitando turnos cancelados.
+    const yaTieneEsteMes = reservas.some(r=>r.alumnoNombre===alumno.nombre && r.fecha && r.fecha.startsWith(mesActualStr));
+    if(yaTieneEsteMes){ saltadas++; continue; }
     const lunes=getLunesDe(primerDiaMes);
     while(lunes<=ultimoDiaMes){
       for(const hkey of alumno.horarios){
@@ -1463,17 +1469,14 @@ window.seedSemanaActual=async function(){
         const fechaDia=new Date(lunes); fechaDia.setDate(lunes.getDate()+idx);
         if(fechaDia<hoyD || fechaDia.getMonth()!==hoyD.getMonth()) continue;
         const fk=fechaKey(fechaDia);
-        const yaExiste=reservas.find(r=>r.fecha===fk&&r.horario===hkey&&r.alumnoNombre===alumno.nombre);
-        if(!yaExiste){
-          await addDoc(reservasCol,{fecha:fk, horario:hkey, alumnoNombre:alumno.nombre, alumnoId:alumno.id, ts:Date.now(), auto:true, uid:OWNER_UID});
-          count++;
-        }
+        await addDoc(reservasCol,{fecha:fk, horario:hkey, alumnoNombre:alumno.nombre, alumnoId:alumno.id, ts:Date.now(), auto:true, uid:OWNER_UID});
+        count++;
       }
       lunes.setDate(lunes.getDate()+7);
     }
   }
   const mesNombre=new Date().toLocaleString('es-AR',{month:'long'});
-  toast(count>0?`✓ ${count} turno${count!==1?"s":""} cargado${count!==1?"s":""} para ${mesNombre}`:`✓ La agenda de ${mesNombre} ya está al día`, "ok");
+  toast(count>0?`✓ ${count} turno${count!==1?"s":""} cargado${count!==1?"s":""} para ${mesNombre}${saltadas?` (${saltadas} alumna${saltadas!==1?"s":""} ya tenía${saltadas!==1?"n":""} agenda este mes, no se tocaron)`:""}`:`✓ La agenda de ${mesNombre} ya está al día`, "ok");
   document.getElementById("main-content").innerHTML=renderAgendaAdmin();
 }
 
