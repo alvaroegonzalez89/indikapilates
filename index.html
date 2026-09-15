@@ -1542,27 +1542,33 @@ window.confirmarCambioHorarioFijo=async function(reservaId){
   }
 
   // 2) Mueve también los turnos ya generados de hoy en adelante (esta semana y las
-  //    que ya estén cargadas este mes), para que el cambio se note ya mismo.
+  //    que ya estén cargadas este mes), para que el cambio se note ya mismo —
+  //    pero solo si el horario nuevo tiene lugar esa semana puntual; si está lleno,
+  //    esa semana se deja como estaba (no se toca ni se pierde el turno original).
   const DIAS_IDX2={"Lunes":0,"Martes":1,"Miércoles":2,"Jueves":3,"Viernes":4,"Sábado":5,"Domingo":6};
   const idxViejo=DIAS_IDX2[horarioViejo.split(" ")[0]];
   const idxNuevo=DIAS_IDX2[horarioNuevo.split(" ")[0]];
   const hoyFk=fechaKey(new Date(new Date().setHours(0,0,0,0)));
+  const hfNuevo=HORARIOS_FIJOS.find(h=>h.key===horarioNuevo);
   const futuras=reservas.filter(x=>x.alumnoNombre===alumnoNombre && x.horario===horarioViejo && x.fecha>=hoyFk);
-  let movidas=0;
+  let movidas=0, sinCupo=0;
   for(const f of futuras){
+    if(idxViejo===undefined || idxNuevo===undefined) continue;
+    const fechaOrig=new Date(f.fecha+"T00:00:00");
+    const nuevaFecha=new Date(fechaOrig);
+    nuevaFecha.setDate(fechaOrig.getDate()+(idxNuevo-idxViejo));
+    const nuevaFechaKey=fechaKey(nuevaFecha);
+    if(nuevaFechaKey<hoyFk) continue; // esa semana ya pasó para el día nuevo, se deja como está
+    const ocupadosDestino=reservas.filter(x=>x.fecha===nuevaFechaKey && x.horario===horarioNuevo).length;
+    if(hfNuevo && ocupadosDestino>=hfNuevo.cupos){ sinCupo++; continue; } // sin lugar esa semana, no se toca el turno original
     await deleteDoc(doc(db,"reservas"+NS,f.id));
-    if(idxViejo!==undefined && idxNuevo!==undefined){
-      const fechaOrig=new Date(f.fecha+"T00:00:00");
-      const nuevaFecha=new Date(fechaOrig);
-      nuevaFecha.setDate(fechaOrig.getDate()+(idxNuevo-idxViejo));
-      const nuevaFechaKey=fechaKey(nuevaFecha);
-      if(nuevaFechaKey>=hoyFk){
-        await addDoc(reservasCol,{fecha:nuevaFechaKey, horario:horarioNuevo, alumnoNombre, alumnoId, ts:Date.now(), auto:true, uid:OWNER_UID});
-        movidas++;
-      }
-    }
+    await addDoc(reservasCol,{fecha:nuevaFechaKey, horario:horarioNuevo, alumnoNombre, alumnoId, ts:Date.now(), auto:true, uid:OWNER_UID});
+    movidas++;
   }
-  toast(`✓ De ahora en más ${alumnoNombre.split(" ")[0]} tiene fijo ${horarioNuevo}${movidas?` (se movieron ${movidas} turno${movidas!==1?"s":""} ya cargado${movidas!==1?"s":""})`:""}`,"ok");
+  let msg=`✓ De ahora en más ${alumnoNombre.split(" ")[0]} tiene fijo ${horarioNuevo}`;
+  if(movidas) msg+=` (se movieron ${movidas} turno${movidas!==1?"s":""} ya cargado${movidas!==1?"s":""})`;
+  if(sinCupo) msg+=`. Ojo: ${sinCupo} semana${sinCupo!==1?"s":""} no se pudo mover porque ${horarioNuevo} ya estaba lleno esa vez — quedó en ${horarioViejo}`;
+  toast(msg, sinCupo?"blue":"ok");
   document.getElementById("main-content").innerHTML=renderAgendaAdmin();
 }
 
