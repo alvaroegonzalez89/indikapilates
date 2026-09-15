@@ -221,7 +221,7 @@ tr:last-child td{border-bottom:none;}
     </div>
     <div class="nav-sec">Menú</div>
     <div class="nav-item active" data-nav="dashboard" onclick="navTo('dashboard')"><span class="ni">◐</span> Inicio</div>
-    <div class="nav-item" data-nav="alumnos" onclick="navTo('alumnos')"><span class="ni">◒</span> Alumnas</div>
+    <div class="nav-item" data-nav="alumnos" onclick="navTo('alumnos')"><span class="ni">◒</span> Alumnos/as</div>
     <div class="nav-item" data-nav="cuotas" onclick="navTo('cuotas')"><span class="ni">◓</span> Cuotas</div>
     <div class="nav-item" data-nav="horarios" onclick="navTo('horarios')"><span class="ni">◔</span> Horarios</div>
     <div class="nav-item" data-nav="agenda" onclick="navTo('agenda')"><span class="ni">▤</span> Agenda</div>
@@ -237,7 +237,7 @@ tr:last-child td{border-bottom:none;}
   </div>
   <div class="bottom-nav" id="bottom-nav">
     <div class="bn-item active" data-nav="dashboard" onclick="navTo('dashboard')"><span class="bn-icon">◐</span>Inicio</div>
-    <div class="bn-item" data-nav="alumnos" onclick="navTo('alumnos')"><span class="bn-icon">◒</span>Alumnas</div>
+    <div class="bn-item" data-nav="alumnos" onclick="navTo('alumnos')"><span class="bn-icon">◒</span>Alumnos/as</div>
     <div class="bn-item" data-nav="cuotas" onclick="navTo('cuotas')"><span class="bn-icon">◓</span>Cuotas</div>
     <div class="bn-item" data-nav="horarios" onclick="navTo('horarios')"><span class="bn-icon">◔</span>Horarios</div>
     <div class="bn-item" data-nav="agenda" onclick="navTo('agenda')"><span class="bn-icon">▤</span>Agenda</div>
@@ -246,10 +246,10 @@ tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
-<!-- MODAL ALUMNA -->
+<!-- MODAL ALUMNO/A -->
 <div class="modal-bg" id="modal-alumno" style="display:none;">
   <div class="modal-box">
-    <div class="modal-title" id="modal-titulo">Nueva alumna</div>
+    <div class="modal-title" id="modal-titulo">Nuevo/a alumno/a</div>
     <input type="hidden" id="edit-id"/>
     <div class="fg"><label class="fl">Nombre completo</label><input class="fi" id="f-nombre" placeholder="Nombre y apellido"/></div>
     <div class="frow">
@@ -262,7 +262,7 @@ tr:last-child td{border-bottom:none;}
     </div>
     <div class="fg"><label class="fl">DNI (opcional)</label><input class="fi" id="f-dni" placeholder="Sin puntos"/></div>
     <div class="fg"><label class="fl">Horarios asignados</label><div id="horarios-socio-wrap"></div></div>
-    <div class="fg tog-wrap"><button class="tog on" id="tog-activo" onclick="toggleActivo()"></button><span id="tog-label" style="color:var(--green)">Alumna activa</span></div>
+    <div class="fg tog-wrap"><button class="tog on" id="tog-activo" onclick="toggleActivo()"></button><span id="tog-label" style="color:var(--green)">Alumno/a activo/a</span></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
       <button class="btn btn-fire" onclick="guardarAlumno()">Guardar</button>
@@ -278,7 +278,7 @@ tr:last-child td{border-bottom:none;}
       <div style="font-size:10px;color:var(--muted);margin-top:2px;">Comprobante N° <span id="comp-nro"></span></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
-      <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Alumna</span><strong id="comp-nombre"></strong></div>
+      <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Alumno/a</span><strong id="comp-nombre"></strong></div>
       <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Plan</span><span id="comp-plan"></span></div>
       <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Período</span><span id="comp-mes"></span></div>
       <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Monto</span><strong style="color:var(--green);" id="comp-monto"></strong></div>
@@ -611,13 +611,13 @@ function renderDashboard(){
     <div class="hero-inner">
       <div class="hero-tag">${gymConfig.direccion||''}</div>
       <div class="hero-title">Indika<br/>Pilates</div>
-      <div class="hero-desc">Gestioná alumnas, cuotas, horarios e inscripciones desde un solo lugar.</div>
+      <div class="hero-desc">Gestioná alumnos/as, cuotas, horarios e inscripciones desde un solo lugar.</div>
       <div class="hero-btns">
-        <button class="btn btn-fire" onclick="navTo('alumnos')">Ver alumnas →</button>
+        <button class="btn btn-fire" onclick="navTo('alumnos')">Ver alumnos/as →</button>
         <button class="btn btn-ghost" onclick="navTo('agenda')">Ver agenda</button>
       </div>
       <div class="hero-stats">
-        <div class="hs"><div class="hs-val">${activos}</div><div class="hs-label">Alumnas activas</div></div>
+        <div class="hs"><div class="hs-val">${activos}</div><div class="hs-label">Alumnos/as activos/as</div></div>
         <div class="hs"><div class="hs-val">${pagados}</div><div class="hs-label">Pagaron este mes</div></div>
         <div class="hs"><div class="hs-val">$${recaud.toLocaleString("es-AR")}</div><div class="hs-label">Recaudado</div></div>
         <div class="hs"><div class="hs-val">${nuevosProsp}</div><div class="hs-label">Nuevas inscripciones</div></div>
@@ -662,14 +662,14 @@ function renderAlumnos(){
         <button class="btn btn-ghost btn-sm" onclick="abrirEditar('${a.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="abrirDelete('${a.id}','${a.nombre}','alumno')">✕</button>
       </div></td>
-    </tr>`).join(""):`<tr><td colspan="7" class="empty">No se encontraron alumnas</td></tr>`;
+    </tr>`).join(""):`<tr><td colspan="7" class="empty">No se encontraron alumnos/as</td></tr>`;
   return `<div class="page">
     <div class="topbar">
-      <div><div class="eyebrow">Gestión</div><div class="page-title">Alumnas</div></div>
+      <div><div class="eyebrow">Gestión</div><div class="page-title">Alumnos/as</div></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div class="search-wrap"><span class="search-icon">🔍</span><input placeholder="Buscar alumna..." value="${busqueda}" oninput="filtrar(this.value)"/></div>
+        <div class="search-wrap"><span class="search-icon">🔍</span><input placeholder="Buscar alumno/a..." value="${busqueda}" oninput="filtrar(this.value)"/></div>
         <button class="btn btn-ghost" onclick="copiarLinkInscripcion()">🔗 Link inscripción</button>
-        <button class="btn btn-fire" onclick="abrirNuevo()">+ Nueva alumna</button>
+        <button class="btn btn-fire" onclick="abrirNuevo()">+ Nuevo/a alumno/a</button>
       </div>
     </div>
     <div class="card">
@@ -704,7 +704,7 @@ function renderCuotas(){
       <td><span class="badge ${pagado?"b-paid":"b-pend"}">${pagado?"✓ PAGADO":"● PENDIENTE"}</span></td>
       <td><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${accionBtn}</div></td>
     </tr>`;
-  }).join(""):`<tr><td colspan="5" class="empty">No hay alumnas activas</td></tr>`;
+  }).join(""):`<tr><td colspan="5" class="empty">No hay alumnos/as activos/as</td></tr>`;
   const pendCount = activos.filter(a=>!(a.cuotas&&a.cuotas[ck]&&a.cuotas[ck].pagado)).length;
   return `<div class="page">
     <div class="topbar">
@@ -717,7 +717,7 @@ function renderCuotas(){
         ${pendCount?`<button class="btn btn-fire btn-sm" onclick="iniciarRecordatorios()">📲 Recordatorios (${pendCount})</button>`:""}
       </div>
     </div>
-    <div class="card"><table><thead><tr><th>Alumna</th><th>Plan</th><th>Monto</th><th>Estado</th><th>Acción</th></tr></thead>
+    <div class="card"><table><thead><tr><th>Alumno/a</th><th>Plan</th><th>Monto</th><th>Estado</th><th>Acción</th></tr></thead>
     <tbody>${rows}</tbody></table></div>
   </div>`;
 }
@@ -829,7 +829,7 @@ function renderConfig(){
         <td style="font-size:12px;color:var(--muted);">${ocupados} ocupado${ocupados!==1?"s":""}</td>
         <td>${puedeEliminar
           ? `<button class="btn btn-danger btn-sm" onclick="eliminarHorarioConfig('${h.key}')">✕ Quitar</button>`
-          : `<span style="font-size:11px;color:var(--muted);">Tiene alumnas</span>`
+          : `<span style="font-size:11px;color:var(--muted);">Tiene alumnos/as</span>`
         }</td>
       </tr>`;
     }).join("")
@@ -843,7 +843,7 @@ function renderConfig(){
     <div class="card" style="margin-bottom:16px;">
       <div class="card-header"><div class="card-title">Horarios y cupos</div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="font-size:12px;color:var(--muted);">Solo podés quitar horarios sin alumnas asignadas</div>
+          <div style="font-size:12px;color:var(--muted);">Solo podés quitar horarios sin alumnos/as asignados/as</div>
           <button class="btn btn-ghost btn-sm" onclick="restablecerHorariosDefault()">↺ Restablecer por defecto</button>
         </div>
       </div>
@@ -937,7 +937,7 @@ window.actualizarMontoSegunPlan=function(){
   if(plan) document.getElementById("f-monto").value=plan.precio;
 }
 window.abrirNuevo=function(){
-  document.getElementById("modal-titulo").textContent="Nueva alumna";
+  document.getElementById("modal-titulo").textContent="Nuevo/a alumno/a";
   document.getElementById("edit-id").value="";
   ["f-nombre","f-email","f-tel","f-monto","f-dni"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("f-plan").innerHTML=opcionesPlanes("");
@@ -948,7 +948,7 @@ window.abrirNuevo=function(){
 
 window.abrirEditar=function(id){
   const a=alumnos.find(x=>x.id===id); if(!a) return;
-  document.getElementById("modal-titulo").textContent="Editar alumna";
+  document.getElementById("modal-titulo").textContent="Editar alumno/a";
   document.getElementById("edit-id").value=id;
   document.getElementById("f-nombre").value=a.nombre||"";
   document.getElementById("f-email").value=a.email||"";
@@ -965,7 +965,7 @@ window.cerrarModal=function(){ document.getElementById("modal-alumno").style.dis
 window.toggleActivo=function(){ activoForm=!activoForm; actualizarToggle(); }
 function actualizarToggle(){
   document.getElementById("tog-activo").className=`tog ${activoForm?"on":"off"}`;
-  document.getElementById("tog-label").textContent=activoForm?"Alumna activa":"Alumna inactiva";
+  document.getElementById("tog-label").textContent=activoForm?"Alumno/a activo/a":"Alumno/a inactivo/a";
   document.getElementById("tog-label").style.color=activoForm?"var(--green)":"var(--muted)";
 }
 
@@ -1006,8 +1006,8 @@ window.guardarAlumno=async function(){
     horarios:window.getHorariosSeleccionados()
   };
   const editId=document.getElementById("edit-id").value;
-  if(editId){ await updateDoc(doc(db,"alumnos"+NS,editId),data); toast("Alumna actualizada ✓"); }
-  else{ data.fechaAlta=new Date().toISOString().slice(0,10); data.cuotas={}; data.uid=OWNER_UID; await addDoc(alumnosCol,data); toast("Alumna agregada ✓"); }
+  if(editId){ await updateDoc(doc(db,"alumnos"+NS,editId),data); toast("Alumno/a actualizado/a ✓"); }
+  else{ data.fechaAlta=new Date().toISOString().slice(0,10); data.cuotas={}; data.uid=OWNER_UID; await addDoc(alumnosCol,data); toast("Alumno/a agregado/a ✓"); }
   window.cerrarModal();
 }
 
@@ -1072,7 +1072,7 @@ window.enviarComprobante=function(){
 🧘 *${gymConfig.nombre}*
 N° Comprobante: #${c.nroComp}
 ━━━━━━━━━━━━━━━━━━
-👤 Alumna: ${c.a.nombre}
+👤 Alumno/a: ${c.a.nombre}
 📋 Plan: ${c.a.plan||"Mensual"}
 📅 Período: ${c.mes} ${c.año}
 💰 Monto abonado: $${c.monto}
@@ -1098,7 +1098,7 @@ window.abrirTransferencia=function(id){
 window.enviarTransferenciaWA=function(){
   const a=_transferSocio; if(!a) return;
   const tel=(a.telefono||"").replace(/\D/g,"");
-  if(!tel){ toast("Esta alumna no tiene teléfono","err"); return; }
+  if(!tel){ toast("Este/a alumno/a no tiene teléfono","err"); return; }
   const telFull=tel.startsWith("54")?tel:`54${tel}`;
   const monto=Number(a.monto||0).toLocaleString("es-AR");
   const msg=encodeURIComponent(`Hola ${a.nombre.split(" ")[0]} 👋
@@ -1196,7 +1196,7 @@ window.verProspecto=function(id){
   document.getElementById("prospecto-actions").innerHTML=`
     <button class="btn btn-ghost" onclick="document.getElementById('modal-prospecto').style.display='none'">Cerrar</button>
     <button class="btn btn-success" onclick="contactarProspecto('${p.id}')">📲 WhatsApp</button>
-    <button class="btn btn-fire" onclick="convertirProspecto('${p.id}')">✓ Confirmar como alumna</button>`;
+    <button class="btn btn-fire" onclick="convertirProspecto('${p.id}')">✓ Confirmar como alumno/a</button>`;
   document.getElementById("modal-prospecto").style.display="flex";
 }
 window.contactarProspecto=function(id){
@@ -1217,7 +1217,7 @@ window.convertirProspecto=async function(id){
   const horariosArr = p.horarios||[];
   const sinCupo = horariosArr.filter(h=>cuposLibres(h) <= 0);
   if(sinCupo.length){
-    toast(`Algunos horarios ya no tienen cupo: ${sinCupo.join(", ")}. Editá la alumna luego de confirmar.`,"err");
+    toast(`Algunos horarios ya no tienen cupo: ${sinCupo.join(", ")}. Editá al/a la alumno/a luego de confirmar.`,"err");
   }
   await addDoc(alumnosCol,{
     nombre:p.nombre, email:p.email||"", telefono:p.telefono||"", dni:p.dni||"",
@@ -1228,7 +1228,7 @@ window.convertirProspecto=async function(id){
   });
   await updateDoc(doc(db,"prospectos"+NS,id),{estado:"confirmado"});
   document.getElementById("modal-prospecto").style.display="none";
-  if(!sinCupo.length) toast("✓ Alumna agregada con sus horarios confirmados","ok");
+  if(!sinCupo.length) toast("✓ Alumno/a agregado/a con sus horarios confirmados","ok");
   navTo("alumnos");
 }
 
@@ -1302,7 +1302,7 @@ window.agregarHorarioConfig=async function(){
 }
 window.eliminarHorarioConfig=async function(key){
   const ocupados = (HORARIOS_FIJOS.find(h=>h.key===key)?.cupos||0) - cuposLibres(key);
-  if(ocupados>0){ toast("No podés eliminar un horario con alumnas asignadas","err"); return; }
+  if(ocupados>0){ toast("No podés eliminar un horario con alumnos/as asignados/as","err"); return; }
   await deleteDoc(doc(db,"horarios"+NS,key.replace(/ /g,"_")));
   toast("Horario eliminado");
 }
@@ -1314,7 +1314,7 @@ window.editarCupoHorario=async function(key, valor){
 window.restablecerHorariosDefault=async function(){
   const conAlumnas=HORARIOS_FIJOS.filter(h=>sociosEnHorario(h.key).length>0);
   if(conAlumnas.length){
-    if(!confirm(`Hay ${conAlumnas.length} horario(s) con alumnas asignadas. Restablecer va a recrear TODOS los horarios con los valores por defecto (5 cupos, lunes a sábado) sin borrar alumnas ni sus horarios asignados. ¿Continuar?`)) return;
+    if(!confirm(`Hay ${conAlumnas.length} horario(s) con alumnos/as asignados/as. Restablecer va a recrear TODOS los horarios con los valores por defecto (5 cupos, lunes a sábado) sin borrar alumnos/as ni sus horarios asignados. ¿Continuar?`)) return;
   } else {
     if(!confirm("Esto va a recrear todos los horarios con los valores por defecto (5 cupos, lunes a sábado). ¿Continuar?")) return;
   }
@@ -1391,15 +1391,16 @@ function renderAgendaAdmin(){
         <div id="edit-${slotId}" style="display:none;margin-top:6px;border-top:1px solid var(--border);padding-top:6px;">
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">Quitar</div>
           ${resSlot.length?resSlot.map(r=>`
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;">
-              <span style="font-size:11px;color:var(--muted);">${r.alumnoNombre}</span>
-              <button onclick="quitarReservaAdmin('${r.id}')" style="background:rgba(181,88,63,0.12);border:none;border-radius:4px;color:var(--terracotta);font-size:9px;padding:2px 6px;cursor:pointer;font-family:'Poppins',sans-serif;">✕ Quitar</button>
+            <div id="row-${r.id}" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;gap:4px;">
+              <span style="font-size:11px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.alumnoNombre}</span>
+              <button onclick="mostrarCambioHorario('${r.id}')" title="Cambiar horario fijo (se repite en las semanas siguientes)" style="background:rgba(130,147,143,0.15);border:none;border-radius:4px;color:var(--dustyblue);font-size:9px;padding:2px 6px;cursor:pointer;flex-shrink:0;">↔</button>
+              <button onclick="quitarReservaAdmin('${r.id}')" title="Quitar solo esta vez" style="background:rgba(181,88,63,0.12);border:none;border-radius:4px;color:var(--terracotta);font-size:9px;padding:2px 6px;cursor:pointer;flex-shrink:0;">✕</button>
             </div>`).join(""):`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Sin reservas aún</div>`}
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:7px 0 4px;">Agregar</div>
           <select id="sel-${slotId}" onchange="toggleOtroAdmin('${slotId}',this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:6px;font-size:11px;font-family:'Poppins',sans-serif;margin-bottom:4px;">
-            <option value="">— Elegir alumna —</option>
+            <option value="">— Elegir alumno/a —</option>
             ${optsAlumnos}
-            <option value="__otro__">Otra (no es alumna)...</option>
+            <option value="__otro__">Otro/a (no es alumno/a)...</option>
           </select>
           <input id="otro-${slotId}" placeholder="Nombre completo" style="display:none;width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:11px;font-family:'Poppins',sans-serif;margin-bottom:4px;outline:none;"/>
           <button onclick="agregarReservaAdmin('${slotId}','${fk}','${hkey}')" style="width:100%;background:rgba(107,107,71,0.15);border:1px solid rgba(107,107,71,0.3);border-radius:6px;color:var(--accent);font-size:10px;padding:4px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:700;">✓ Agregar</button>
@@ -1420,14 +1421,14 @@ function renderAgendaAdmin(){
       ${mesYaCargado()
         ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
             <button class="btn btn-blue btn-sm" onclick="seedSemanaActual(true)">🔄 Actualizar mes</button>
-            <span style="font-size:10px;color:var(--muted);">Agrega alumnas nuevas sin tocar lo existente</span>
+            <span style="font-size:10px;color:var(--muted);">Agrega alumnos/as nuevos/as sin tocar lo existente</span>
            </div>`
         : `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
             <button class="btn btn-success btn-sm" onclick="seedSemanaActual(false)">⚡ Cargar mes</button>
-            <span style="font-size:10px;color:var(--muted);">Genera la agenda del mes según los horarios fijos de cada alumna</span>
+            <span style="font-size:10px;color:var(--muted);">Genera la agenda del mes según los horarios fijos de cada alumno/a</span>
            </div>`
       }
-        <button class="btn btn-blue btn-sm" onclick="navigator.clipboard.writeText('${linkAgenda}').then(()=>toast('Link copiado','blue'))">🔗 Link para alumnas</button>
+        <button class="btn btn-blue btn-sm" onclick="navigator.clipboard.writeText('${linkAgenda}').then(()=>toast('Link copiado','blue'))">🔗 Link para alumnos/as</button>
       </div>
     </div>
     <div style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;">
@@ -1455,7 +1456,7 @@ window.seedSemanaActual=async function(){
   let count=0, saltadas=0;
   for(const alumno of alumnos){
     if(!alumno.activo || !alumno.horarios || !alumno.horarios.length) continue;
-    // Si la alumna ya tiene al menos una reserva este mes, la salteamos entera:
+    // Si el/la alumno/a ya tiene al menos una reserva este mes, la salteamos entera:
     // puede haber cambiado un turno a mano o cancelado uno puntual, y no queremos
     // pisar esas decisiones creando duplicados o resucitando turnos cancelados.
     const yaTieneEsteMes = reservas.some(r=>r.alumnoNombre===alumno.nombre && r.fecha && r.fecha.startsWith(mesActualStr));
@@ -1476,7 +1477,7 @@ window.seedSemanaActual=async function(){
     }
   }
   const mesNombre=new Date().toLocaleString('es-AR',{month:'long'});
-  toast(count>0?`✓ ${count} turno${count!==1?"s":""} cargado${count!==1?"s":""} para ${mesNombre}${saltadas?` (${saltadas} alumna${saltadas!==1?"s":""} ya tenía${saltadas!==1?"n":""} agenda este mes, no se tocaron)`:""}`:`✓ La agenda de ${mesNombre} ya está al día`, "ok");
+  toast(count>0?`✓ ${count} turno${count!==1?"s":""} cargado${count!==1?"s":""} para ${mesNombre}${saltadas?` (${saltadas} alumno${saltadas!==1?"s":""}/a${saltadas!==1?"s":""} ya tenía${saltadas!==1?"n":""} agenda este mes, no se tocaron)`:""}`:`✓ La agenda de ${mesNombre} ya está al día`, "ok");
   document.getElementById("main-content").innerHTML=renderAgendaAdmin();
 }
 
@@ -1491,7 +1492,7 @@ window.toggleEditarAdmin=function(slotId){
 }
 window.agregarReservaAdmin=async function(slotId, fecha, horario){
   const sel=document.getElementById("sel-"+slotId);
-  if(!sel||!sel.value){ toast("Elegí una alumna o escribí un nombre","err"); return; }
+  if(!sel||!sel.value){ toast("Elegí un/a alumno/a o escribí un nombre","err"); return; }
   let alumnoId="externo", alumnoNombre="";
   if(sel.value==="__otro__"){
     const otroinput=document.getElementById("otro-"+slotId);
@@ -1508,7 +1509,64 @@ window.toggleOtroAdmin=function(slotId, val){
   if(el) el.style.display=val==="__otro__"?"block":"none";
 }
 
-// ── AGENDA PÚBLICA (autogestión de turnos por las alumnas) ──
+// ── CAMBIO DE HORARIO FIJO (persiste en las semanas/meses siguientes) ──
+window.mostrarCambioHorario=function(reservaId){
+  const r=reservas.find(x=>x.id===reservaId);
+  if(!r) return;
+  const el=document.getElementById("row-"+reservaId);
+  if(!el) return;
+  const opciones=HORARIOS_FIJOS.filter(h=>h.key!==r.horario).map(h=>`<option value="${h.key}">${h.dia} ${h.hora}</option>`).join("");
+  el.innerHTML=`
+    <select id="mover-sel-${reservaId}" style="flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 5px;border-radius:5px;font-size:10px;font-family:'Poppins',sans-serif;">
+      <option value="">Nuevo horario fijo...</option>
+      ${opciones}
+    </select>
+    <button onclick="confirmarCambioHorarioFijo('${reservaId}')" style="background:rgba(107,107,71,0.15);border:none;border-radius:4px;color:var(--accent);font-size:9px;padding:2px 6px;cursor:pointer;flex-shrink:0;">✓</button>
+    <button onclick="document.getElementById('main-content').innerHTML=renderAgendaAdmin()" style="background:transparent;border:none;color:var(--muted);font-size:9px;padding:2px 4px;cursor:pointer;flex-shrink:0;">✕</button>`;
+}
+window.confirmarCambioHorarioFijo=async function(reservaId){
+  const r=reservas.find(x=>x.id===reservaId);
+  if(!r){ toast("No se encontró el turno","err"); return; }
+  const sel=document.getElementById("mover-sel-"+reservaId);
+  const horarioNuevo=sel?sel.value:"";
+  if(!horarioNuevo){ toast("Elegí un horario nuevo","err"); return; }
+  const horarioViejo=r.horario, alumnoId=r.alumnoId, alumnoNombre=r.alumnoNombre;
+
+  // 1) Actualiza el horario fijo de la ficha (así "Cargar/Actualizar mes" ya arranca
+  //    generando el mes que viene con el horario nuevo).
+  const alumno=alumnos.find(a=>a.id===alumnoId);
+  if(alumno){
+    const nuevosHorarios=(alumno.horarios||[]).filter(h=>h!==horarioViejo);
+    if(!nuevosHorarios.includes(horarioNuevo)) nuevosHorarios.push(horarioNuevo);
+    await updateDoc(doc(db,"alumnos"+NS,alumnoId),{horarios:nuevosHorarios});
+  }
+
+  // 2) Mueve también los turnos ya generados de hoy en adelante (esta semana y las
+  //    que ya estén cargadas este mes), para que el cambio se note ya mismo.
+  const DIAS_IDX2={"Lunes":0,"Martes":1,"Miércoles":2,"Jueves":3,"Viernes":4,"Sábado":5,"Domingo":6};
+  const idxViejo=DIAS_IDX2[horarioViejo.split(" ")[0]];
+  const idxNuevo=DIAS_IDX2[horarioNuevo.split(" ")[0]];
+  const hoyFk=fechaKey(new Date(new Date().setHours(0,0,0,0)));
+  const futuras=reservas.filter(x=>x.alumnoNombre===alumnoNombre && x.horario===horarioViejo && x.fecha>=hoyFk);
+  let movidas=0;
+  for(const f of futuras){
+    await deleteDoc(doc(db,"reservas"+NS,f.id));
+    if(idxViejo!==undefined && idxNuevo!==undefined){
+      const fechaOrig=new Date(f.fecha+"T00:00:00");
+      const nuevaFecha=new Date(fechaOrig);
+      nuevaFecha.setDate(fechaOrig.getDate()+(idxNuevo-idxViejo));
+      const nuevaFechaKey=fechaKey(nuevaFecha);
+      if(nuevaFechaKey>=hoyFk){
+        await addDoc(reservasCol,{fecha:nuevaFechaKey, horario:horarioNuevo, alumnoNombre, alumnoId, ts:Date.now(), auto:true, uid:OWNER_UID});
+        movidas++;
+      }
+    }
+  }
+  toast(`✓ De ahora en más ${alumnoNombre.split(" ")[0]} tiene fijo ${horarioNuevo}${movidas?` (se movieron ${movidas} turno${movidas!==1?"s":""} ya cargado${movidas!==1?"s":""})`:""}`,"ok");
+  document.getElementById("main-content").innerHTML=renderAgendaAdmin();
+}
+
+// ── AGENDA PÚBLICA (autogestión de turnos por los/las alumnos/as) ──
 function initPublicAgenda(){
   onSnapshot(alumnosCol, snap=>{ alumnos=snap.docs.map(d=>({id:d.id,...d.data()})); });
   onSnapshot(horariosCol, snap=>{ if(!snap.empty) HORARIOS_FIJOS=snap.docs.map(d=>d.data()); });
