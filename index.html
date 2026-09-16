@@ -1396,14 +1396,18 @@ function renderAgendaAdmin(){
               <button onclick="mostrarCambioHorario('${r.id}')" title="Cambiar horario fijo (se repite en las semanas siguientes)" style="background:rgba(130,147,143,0.15);border:none;border-radius:4px;color:var(--dustyblue);font-size:9px;padding:2px 6px;cursor:pointer;flex-shrink:0;">↔</button>
               <button onclick="quitarReservaAdmin('${r.id}')" title="Quitar solo esta vez" style="background:rgba(181,88,63,0.12);border:none;border-radius:4px;color:var(--terracotta);font-size:9px;padding:2px 6px;cursor:pointer;flex-shrink:0;">✕</button>
             </div>`).join(""):`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Sin reservas aún</div>`}
-          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:7px 0 4px;">Agregar</div>
+          ${libres>0?`
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:7px 0 4px;">Agregar (${libres} lugar${libres!==1?"es":""} libre${libres!==1?"s":""})</div>
           <select id="sel-${slotId}" onchange="toggleOtroAdmin('${slotId}',this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:6px;font-size:11px;font-family:'Poppins',sans-serif;margin-bottom:4px;">
             <option value="">— Elegir alumno/a —</option>
             ${optsAlumnos}
             <option value="__otro__">Otro/a (no es alumno/a)...</option>
           </select>
           <input id="otro-${slotId}" placeholder="Nombre completo" style="display:none;width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:11px;font-family:'Poppins',sans-serif;margin-bottom:4px;outline:none;"/>
-          <button onclick="agregarReservaAdmin('${slotId}','${fk}','${hkey}')" style="width:100%;background:rgba(107,107,71,0.15);border:1px solid rgba(107,107,71,0.3);border-radius:6px;color:var(--accent);font-size:10px;padding:4px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:700;">✓ Agregar</button>
+          <button onclick="agregarReservaAdmin('${slotId}','${fk}','${hkey}')" style="width:100%;background:rgba(107,107,71,0.15);border:1px solid rgba(107,107,71,0.3);border-radius:6px;color:var(--accent);font-size:10px;padding:4px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:700;">✓ Agregar</button>`
+          :`
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:7px 0 4px;">Agregar</div>
+          <div style="font-size:11px;color:var(--terracotta);background:rgba(181,88,63,0.08);border:1px solid rgba(181,88,63,0.2);border-radius:6px;padding:6px 8px;text-align:center;">Sin cupos disponibles — quitá a alguien primero</div>`}
         </div>
       </div>`;
     });
@@ -1491,6 +1495,9 @@ window.toggleEditarAdmin=function(slotId){
   if(el) el.style.display=el.style.display==="none"?"block":"none";
 }
 window.agregarReservaAdmin=async function(slotId, fecha, horario){
+  const hf=HORARIOS_FIJOS.find(h=>h.key===horario);
+  const ocupados=reservas.filter(x=>x.fecha===fecha && x.horario===horario).length;
+  if(hf && ocupados>=hf.cupos){ toast("Sin cupos disponibles en este horario","err"); document.getElementById("main-content").innerHTML=renderAgendaAdmin(); return; }
   const sel=document.getElementById("sel-"+slotId);
   if(!sel||!sel.value){ toast("Elegí un/a alumno/a o escribí un nombre","err"); return; }
   let alumnoId="externo", alumnoNombre="";
@@ -1515,7 +1522,23 @@ window.mostrarCambioHorario=function(reservaId){
   if(!r) return;
   const el=document.getElementById("row-"+reservaId);
   if(!el) return;
-  const opciones=HORARIOS_FIJOS.filter(h=>h.key!==r.horario).map(h=>`<option value="${h.key}">${h.dia} ${h.hora}</option>`).join("");
+  const DIAS_IDX3={"Lunes":0,"Martes":1,"Miércoles":2,"Jueves":3,"Viernes":4,"Sábado":5,"Domingo":6};
+  const idxViejo=DIAS_IDX3[r.horario.split(" ")[0]];
+  const fechaBase=new Date(r.fecha+"T00:00:00");
+  const opciones=HORARIOS_FIJOS.filter(h=>h.key!==r.horario).map(h=>{
+    const idxNuevo=DIAS_IDX3[h.dia];
+    let etiqueta=`${h.dia} ${h.hora}`;
+    let sinCupo=false;
+    if(idxViejo!==undefined && idxNuevo!==undefined){
+      const fechaCand=new Date(fechaBase);
+      fechaCand.setDate(fechaBase.getDate()+(idxNuevo-idxViejo));
+      const fk=fechaKey(fechaCand);
+      const ocupados=reservas.filter(x=>x.fecha===fk && x.horario===h.key).length;
+      sinCupo=ocupados>=h.cupos;
+      etiqueta+=sinCupo?` — sin cupo (${ocupados}/${h.cupos})`:` — ${h.cupos-ocupados} libre${h.cupos-ocupados!==1?"s":""} (${ocupados}/${h.cupos})`;
+    }
+    return `<option value="${h.key}" ${sinCupo?"disabled":""}>${etiqueta}</option>`;
+  }).join("");
   el.innerHTML=`
     <select id="mover-sel-${reservaId}" style="flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 5px;border-radius:5px;font-size:10px;font-family:'Poppins',sans-serif;">
       <option value="">Nuevo horario fijo...</option>
