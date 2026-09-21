@@ -1337,7 +1337,7 @@ function renderAgendaAdmin(){
   const dias=[];
   for(let i=0;i<6;i++){ const d=new Date(lunesBase); d.setDate(lunesBase.getDate()+i); dias.push(d); }
   const diasConH=dias.filter(d=>HORARIOS_FIJOS.some(h=>h.dia===DIAS_ES2[d.getDay()]));
-  const semanaLbl=offset===0?"Esta semana":offset===1?"Próxima semana":`Semana del ${lunesBase.getDate()} de ${MESES_ES2[lunesBase.getMonth()]}`;
+  const semanaLbl=offset===0?"Esta semana":offset===1?"Próxima semana":offset===-1?"Semana pasada":`Semana del ${lunesBase.getDate()} de ${MESES_ES2[lunesBase.getMonth()]}`;
   const linkAgenda=`${window.location.origin}${window.location.pathname}?agenda=1`;
   const horariosUnicos=[...new Set(HORARIOS_FIJOS.map(h=>h.hora))].sort();
 
@@ -1419,7 +1419,7 @@ function renderAgendaAdmin(){
     <div class="topbar">
       <div><div class="eyebrow">Agenda semanal</div><div class="page-title">Agenda de turnos</div></div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="window._adminOffset=Math.max(0,(window._adminOffset||0)-1);document.getElementById('main-content').innerHTML=renderAgendaAdmin();" ${offset<=0?"style='opacity:0.3;cursor:default'":""}>‹</button>
+        <button class="btn btn-ghost btn-sm" onclick="window._adminOffset=Math.max(-1,(window._adminOffset||0)-1);document.getElementById('main-content').innerHTML=renderAgendaAdmin();" ${offset<=-1?"style='opacity:0.3;cursor:default'":""}>‹</button>
         <span style="font-family:'Jost',sans-serif;font-size:14px;font-weight:600;color:${offset===0?"var(--accent)":"var(--text)"};min-width:120px;text-align:center;">${semanaLbl}</span>
         <button class="btn btn-ghost btn-sm" onclick="window._adminOffset=Math.min(4,(window._adminOffset||0)+1);document.getElementById('main-content').innerHTML=renderAgendaAdmin();">›</button>
       ${mesYaCargado()
